@@ -28,7 +28,7 @@ router
   .delete(validateObjectId, verifyTokenAndAuthorization, deleteUser);
 // /api/users/profile/profile-photo-update
 router
-  .route("/profile/profile-photo-update")
+  .route("/profile/profile-photo-update/:id")
   .post(verifyToken, upload.single("image"), profilePhotoUpdate);
 
 // /api/users/count

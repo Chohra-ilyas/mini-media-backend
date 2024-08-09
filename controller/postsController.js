@@ -1,11 +1,11 @@
 const asyncHandler = require("express-async-handler");
 const path = require("path");
 const fs = require("fs");
-const { Comment } = require("../model/Comment")
+const { Comment } = require("../model/Comment");
 const {
   Post,
   validateCreatepost,
-  validateUpdatepost,
+  validateUpdatePost,
 } = require("../model/Post");
 const {
   cloudinaryUplaodImage,
@@ -121,7 +121,7 @@ module.exports.getPostsCount = asyncHandler(async (req, res) => {
  */
 module.exports.updatePost = asyncHandler(async (req, res) => {
   //1.validation for data
-  const { error } = validateUpdatepost(req.body);
+  const { error } = validateUpdatePost(req.body);
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
   }
@@ -130,7 +130,7 @@ module.exports.updatePost = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "post not found" });
   }
   if (req.user.id === post.user.toString()) {
-    post = await Post.findByIdAndUpdate(
+    const updatedPost = await Post.findByIdAndUpdate(
       req.params.id,
       {
         $set: {
@@ -142,14 +142,12 @@ module.exports.updatePost = asyncHandler(async (req, res) => {
       {
         new: true,
       }
-    );
+    )
+      .populate("user", ["-password"])
+      .populate("comments");
 
     //send response
-    return res.status(200).json({
-      message: "post has been updated successfully",
-      post,
-      postId: post._id,
-    });
+    return res.status(200).json(updatedPost);
   }
   res.status(403).json({
     message: "you are not allowed ,only user himself!!",
@@ -172,43 +170,44 @@ module.exports.updatePostImage = asyncHandler(async (req, res) => {
   if (!post) {
     return res.status(404).json({ message: "post not found" });
   }
-
-  //3.check if his owner post
-  if (req.user.id === post.user.toString()) {
-    //4.add new image
-    const imagePath = path.join(__dirname, `../images/${req.file.filename}`);
-    const result = await cloudinaryUplaodImage(imagePath);
-
-    //5.remove old image
-    await cloudinaryRemoveImage(post.image.publicId);
-
-    //6.update image in DB
-    post = await Post.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: {
-          image: {
-            url: result.secure_url,
-            publicId: result.public_id,
-          },
-        },
-      },
-      {
-        new: true,
-      }
-    );
-    //7.remove image from server
-    fs.unlinkSync(imagePath);
-
-    //8.send response
-    return res.status(200).json({
-      message: "post has been updated successfully",
-      post,
-      postId: post._id,
+  if (req.user.id !== post.user.toString()) {
+    res.status(403).json({
+      message: "you are not allowed ,only user himself!!",
     });
   }
-  res.status(403).json({
-    message: "you are not allowed ,only user himself!!",
+
+  //3.check if his owner post
+
+  //4.add new image
+  const imagePath = path.join(__dirname, `../images/${req.file.filename}`);
+  const result = await cloudinaryUplaodImage(imagePath);
+
+  //5.remove old image
+  await cloudinaryRemoveImage(post.image.publicId);
+
+  //6.update image in DB
+  post = await Post.findByIdAndUpdate(
+    req.params.id,
+    {
+      $set: {
+        image: {
+          url: result.secure_url,
+          publicId: result.public_id,
+        },
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  //7.remove image from server
+  fs.unlinkSync(imagePath);
+
+  //8.send response
+  return res.status(200).json({
+    message: "post has been updated successfully",
+    post,
+    postId: post._id,
   });
 });
 
@@ -266,9 +265,9 @@ module.exports.deletePost = asyncHandler(async (req, res) => {
 
     //remove all comments of this post
     const toRemoveComment = post.comments;
-    toRemoveComment?.map(async (comment)=>{
+    toRemoveComment?.map(async (comment) => {
       await Comment.findByIdAndDelete(comment._id.toString());
-    })
+    });
     //send response
     return res.status(200).json({
       message: "post has been deleted successfully",

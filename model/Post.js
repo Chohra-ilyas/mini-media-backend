@@ -67,7 +67,7 @@ const validateCreatepost = (obj) => {
 };
 
 //validation Update post
-const validateUpdatepost = (obj) => {
+const validateUpdatePost = (obj) => {
   const schema = joi.object({
     title: joi.string().trim().min(2).max(200),
     description: joi.string().trim().min(10),
@@ -80,5 +80,5 @@ const validateUpdatepost = (obj) => {
 module.exports = {
   Post,
   validateCreatepost,
-  validateUpdatepost,
+  validateUpdatePost,
 };

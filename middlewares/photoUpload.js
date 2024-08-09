@@ -25,7 +25,7 @@ const upload = multer({
       cb({ message: "unsupported file format" }, false);
     }
   },
-  limits: { fileSize: 1024 * 1024 * 1 }, // 1 --> 1 megabyte
+  limits: { fileSize: 1024 * 1024 * 2 }, // 2 --> 2 megabyte
 });
 
 module.exports = {

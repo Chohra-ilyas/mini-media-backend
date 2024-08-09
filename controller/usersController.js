@@ -84,7 +84,9 @@ const updateUser = asyncHandler(async (req, res) => {
     {
       new: true,
     }
-  ).select("-password");
+  )
+    .select("-password")
+    .populate("posts");
 
   res.status(200).json(updateUser);
 });
@@ -114,7 +116,9 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 
   //5.Delete user profile picture from cloudinary
-  await cloudinaryRemoveImage(user.profilePhoto.publicId);
+  if (user.profilePhoto.publicId !== null) {
+    await cloudinaryRemoveImage(user.profilePhoto.publicId);
+  }
 
   //6.Delete user posts & comments
   await Post.deleteMany({ user: user._id });
@@ -124,20 +128,26 @@ const deleteUser = asyncHandler(async (req, res) => {
   await User.findByIdAndDelete(req.params.id);
 
   //8.send response to client
-  res.status(200).send("user deleted seccessfully");
+  res.status(200).json({
+    message: "user deleted seccessfully",
+    userId:user._id
+  });
 });
 
 /**
  * @desc upload photo profile
- * @route api/user/profile/profile-photo-update
+ * @route api/user/profile/profile-photo-update/:id
  * @method POST
- * @access private only user himself
+ * @access private (user himself)
  */
 
 const profilePhotoUpdate = asyncHandler(async (req, res) => {
   //1.validation
   if (!req.file) {
     res.status(400).json({ message: "no file provided" });
+  }
+  if (req.user.id !== req.params.id) {
+    res.status(403).json({ message: "you are not allowed" });
   }
 
   //2.Get the path to the image

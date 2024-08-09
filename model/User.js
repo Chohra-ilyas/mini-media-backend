@@ -101,9 +101,27 @@ const validateUpdateUser = (obj) => {
   return schema.validate(obj);
 };
 
+const validateEmail = (obj) => {
+  const schema = joi.object({
+    email: joi.string().trim().min(5).max(100).email(),
+  });
+
+  return schema.validate(obj);
+};
+
+const validateNewPassword = (obj) => {
+  const schema = joi.object({
+    password: joipassword(),
+  });
+
+  return schema.validate(obj);
+};
+
 module.exports = {
   User,
   validateRegisterUser,
   validateLoginUser,
   validateUpdateUser,
+  validateEmail,
+  validateNewPassword
 };

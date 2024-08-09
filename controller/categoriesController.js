@@ -16,7 +16,7 @@ module.exports.createCategory = asyncHandler(async (req, res) => {
 
   //2.create category
   const category = await Category.create({
-    title: req.body.title,
+    title: req.body.title.toLowerCase(),
     user: req.user.id,
   });
 
@@ -54,7 +54,7 @@ module.exports.deleteCategory = asyncHandler(async (req, res) => {
   await Category.findByIdAndDelete(req.params.id)
   //2.send response to client
   return res.status(200).json({
-    message: "post has been deleted successfully",
+    message: "category has been deleted successfully",
     categoryId: category._id,
   });
 });
